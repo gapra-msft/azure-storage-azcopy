@@ -81,7 +81,10 @@ func (cca *cookedCopyCmdArgs) initEnumerator(jobPartOrder common.CopyJobPartOrde
 	}
 
 	// Check if the destination is a directory so we can correctly decide where our files land
-	isDestDir := cca.isDestDirectory(cca.destination, &ctx)
+	isDestDir, err := cca.isDestDirectory(cca.destination, &ctx) 
+	if err != nil {
+		return nil, err
+	}
 	if cca.listOfVersionIDs != nil && (!(cca.fromTo == common.EFromTo.BlobLocal() || cca.fromTo == common.EFromTo.BlobTrash()) || isSourceDir || !isDestDir) {
 		log.Fatalf("Either source is not a blob or destination is not a local folder")
 	}
@@ -278,31 +281,26 @@ func (cca *cookedCopyCmdArgs) initEnumerator(jobPartOrder common.CopyJobPartOrde
 
 // This is condensed down into an individual function as we don't end up re-using the destination traverser at all.
 // This is just for the directory check.
-func (cca *cookedCopyCmdArgs) isDestDirectory(dst common.ResourceString, ctx *context.Context) bool {
+func (cca *cookedCopyCmdArgs) isDestDirectory(dst common.ResourceString, ctx *context.Context) (bool, error) {
 	var err error
 	dstCredInfo := common.CredentialInfo{}
 
 	if ctx == nil {
-		return false
+		return false, nil
 	}
 
 	if dstCredInfo, _, err = getCredentialInfoForLocation(*ctx, cca.fromTo.To(), cca.destination.Value, cca.destination.SAS, false); err != nil {
-		return false
+		return false, err
 	}
 
 	rt, err := initResourceTraverser(dst, cca.fromTo.To(), ctx, &dstCredInfo, nil, nil, false,
 		false, false, func(common.EntityType) {}, cca.listOfVersionIDs, false, pipeline.LogNone)
 
 	if err != nil {
-		return false
+		return false, err
 	}
 
-	isDir, err := rt.isDirectory(false)
-	if err != nil {
-		return false
-	}
-
-	return isDir
+	return rt.isDirectory(false)
 }
 
 // Initialize the modular filters outside of copy to increase readability.
