@@ -903,6 +903,8 @@ extends:
             variables:
               - name: release
                 value: '$(System.DefaultWorkingDirectory)/release'
+              - name: drop
+                value: '$(System.DefaultWorkingDirectory)/drop'
             steps:
               - checkout: self
                 displayName: 'Checkout repository'
@@ -914,3 +916,7 @@ extends:
               - script: |
                   mkdir -p $(release)
                 displayName: 'Prepare release folder'
+
+              - script: |
+                  mkdir -p $(drop)
+                displayName: 'Prepare drop folder'
