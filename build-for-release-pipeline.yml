@@ -909,6 +909,12 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
+              - script: |
+                  sudo apt-get clean
+                  sudo apt-get update --fix-missing
+                  sudo apt-get install -y zip unzip
+                displayName: "Installing Dependencies"
+
               - task: GoTool@0
                 env:
                   GO111MODULE: 'on'
@@ -932,3 +938,12 @@ extends:
                 inputs:
                   rootFolderOrFile: '$(drop)'
                   archiveFile: '$(release)/drop.zip'
+
+              - task: AzureFileCopy@4
+                inputs:
+                  SourcePath: $(release)/*
+                  azureSubscription: 'ESRP KeyVault identity'
+                  Destination: 'AzureBlob'
+                  storage: 'azcopyprivatedrops'
+                  ContainerName: '%24web'
+                  BlobPrefix: 'releases/release-test-version-today'
