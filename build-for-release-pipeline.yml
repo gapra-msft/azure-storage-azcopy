@@ -898,21 +898,19 @@ extends:
           - job: Job
             pool:
               name: azcopy-pool
-              image: ubuntu22-1espt
-              os: linux
+              image: windows2022-1espt
+              os: windows
             variables:
               - name: release
-                value: '$(System.DefaultWorkingDirectory)/release'
+                value: '$(System.DefaultWorkingDirectory)\release'
               - name: drop
-                value: '$(System.DefaultWorkingDirectory)/drop'
+                value: '$(System.DefaultWorkingDirectory)\drop'
             steps:
               - checkout: self
                 displayName: 'Checkout repository'
 
-              - script: |
-                  sudo apt-get clean
-                  sudo apt-get update --fix-missing
-                  sudo apt-get install -y zip unzip
+              - powershell: |
+                  choco install zip unzip -y
                 displayName: "Installing Dependencies"
 
               - task: GoTool@0
@@ -922,7 +920,7 @@ extends:
                   version: $(AZCOPY_GOLANG_VERSION)
 
               - script: |
-                  go build -tags "netgo" -o azcopy
+                  go build -tags "netgo" -o azcopy.exe
                 displayName: 'Build AzCopy'
 
               - script: |
