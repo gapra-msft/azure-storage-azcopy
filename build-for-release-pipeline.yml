@@ -892,12 +892,12 @@ extends:
               os: linux
             # If the pipeline publishes artifacts, use `templateContext` to define the artifacts.
             # This will enable 1ES PT to run SDL analysis tools on the artifacts and then upload them.
-            templateContext:
-              inputs:
-                - input: pipelineArtifact
-                  artifactName: azcopy-windows-signed
-                  targetPath: $(System.DefaultWorkingDirectory)\signed
-                  displayName: 'Download Windows Signed'
+#            templateContext:
+#              inputs:
+#                - input: pipelineArtifact
+#                  artifactName: azcopy-windows-signed
+#                  targetPath: $(System.DefaultWorkingDirectory)\signed
+#                  displayName: 'Download Windows Signed'
             variables:
               - name: input_path
                 value: '$(System.DefaultWorkingDirectory)'
