@@ -909,10 +909,6 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
-              - powershell: |
-                  choco install zip unzip -y
-                displayName: "Installing Dependencies"
-
               - task: GoTool@0
                 env:
                   GO111MODULE: 'on'
