@@ -920,11 +920,11 @@ extends:
                 displayName: 'Build AzCopy'
 
               - script: |
-                  mkdir -p $(release)
+                  mkdir $(release)
                 displayName: 'Prepare release folder'
 
               - script: |
-                  mkdir -p $(drop)
+                  mkdir $(drop)
                 displayName: 'Prepare drop folder'
 
               - task: ArchiveFiles@2
