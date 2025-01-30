@@ -882,3 +882,35 @@ extends:
                 displayName: 'Verify exe in zip'
 
       # VerifyArtifacts end here
+
+      - stage: UploadArtifacts
+        dependsOn: VerifyArtifacts
+        condition: succeeded('VerifyArtifacts')
+        jobs:
+          - job: UploadArtifacts
+            timeoutInMinutes: 120
+            pool:
+              name: azcopy-pool
+              image: ubuntu22-1espt
+              os: linux
+
+            templateContext:
+              inputs:
+                - input: pipelineArtifact
+                  artifactName: azcopy-binaries-linux-amd64
+                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-binaries-linux-amd64
+                  displayName: 'Download Linux Amd64 Binaries'
+                - input: pipelineArtifact
+                  artifactName: azcopy-linux-signed
+                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-linux-signed
+                  displayName: 'Download Linux Signed'
+            variables:
+              - name: input_path
+                value: '$(System.DefaultWorkingDirectory)'
+            steps:
+              - script: |
+                  mkdir -p $(input_path)/release
+                displayName: 'Prepare release directory'
+              - script: |
+                  mkdir -p $(input_path)/drop
+                displayName: 'Prepare drop directory'
