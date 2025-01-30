@@ -909,6 +909,12 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
+              - task: GoTool@0
+                env:
+                  GO111MODULE: 'on'
+                inputs:
+                  version: $(AZCOPY_GOLANG_VERSION)
+
               - script: |
                   go build -tags "netgo" -o azcopy
                 displayName: 'Build AzCopy'
