@@ -958,26 +958,17 @@ extends:
               steps:
                 - checkout: self
                   displayName: 'Checkout repository'
+
                 - script: |
-                    sudo apt-get install build-essential -y
-                    rm -rf /usr/local/bin/azcopy
-                    rm -rf /usr/bin/azcopy
-                    sudo dpkg -i $(input_path)/azcopy-linux-signed/azcopy-*x86_64.deb
+                    go build -tags "netgo" -o ./azcopy
                   displayName: 'Install azcopy'
+
                 - script : |
                     mkdir -p $(release)
-#                    rm -rf $(input_path)/azcopy-linux-signed/mariner
-#                    cp $(input_path)/azcopy-linux-signed/* $(release)
-#                    cp $(input_path)/azcopy-windows-signed/* $(release)
-#                    cp $(input_path)/azcopy-mac-signed/* $(release)
                   displayName: 'Prepare release folder'
+
                 - script : |
                     mkdir -p $(drop)
-#                    cp $(input_path)/azcopy-binaries-linux-amd64/* $(drop)
-#                    cp $(input_path)/azcopy-binaries-linux-arm64/* $(drop)
-#                    cp $(input_path)/azcopy-binaries-windows/* $(drop)
-#                    cp $(input_path)/azcopy-binaries-mac/* $(drop)
-#                    cp $(System.DefaultWorkingDirectory)/NOTICE.txt $(drop)
                   displayName: 'Prepare drop.zip folder'
                 - task: ArchiveFiles@2
                   displayName: 'Archive drop.zip'
@@ -1002,9 +993,9 @@ extends:
                       echo "Artifacts will be uploaded to: $container_url"
                       
                       # Upload the archived builds
-                      AZCOPY_AUTO_LOGIN_TYPE=AzCLI azcopy cp "$(release)/*" "$container_url" --recursive --put-md5=true
+                      AZCOPY_AUTO_LOGIN_TYPE=AzCLI ./azcopy cp "$(release)/*" "$container_url" --recursive --put-md5=true
                       
                       if [ $(publish_m1_container) = "True" ]; then
                         m1_container_url="https://$(release_account_name).blob.core.windows.net/%24web/azcopy-m1-drops/azcopy-$(azcopy_version)-$today"
-                        AZCOPY_AUTO_LOGIN_TYPE=AzCLI azcopy cp "$(input_path)/azcopy-binaries-mac/azcopy_darwin_m1_arm64" "$m1_container_url" --put-md5=true
+                        AZCOPY_AUTO_LOGIN_TYPE=AzCLI ./azcopy cp "$(input_path)/azcopy-binaries-mac/azcopy_darwin_m1_arm64" "$m1_container_url" --put-md5=true
                       fi
