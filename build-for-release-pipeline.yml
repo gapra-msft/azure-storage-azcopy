@@ -898,16 +898,22 @@ extends:
           - job: Job
             pool:
               name: azcopy-pool
-              image: windows2022-1espt
-              os: windows
+              image: ubuntu22-1espt
+              os: linux
             variables:
               - name: release
-                value: '$(System.DefaultWorkingDirectory)\release'
+                value: '$(System.DefaultWorkingDirectory)/release'
               - name: drop
-                value: '$(System.DefaultWorkingDirectory)\drop'
+                value: '$(System.DefaultWorkingDirectory)/drop'
             steps:
               - checkout: self
                 displayName: 'Checkout repository'
+
+              - script: |
+                  sudo apt-get clean
+                  sudo apt-get update --fix-missing
+                  sudo apt-get install -y zip unzip
+                displayName: 'Install Dependencies'
 
               - task: GoTool@0
                 env:
@@ -920,11 +926,11 @@ extends:
                 displayName: 'Build AzCopy'
 
               - script: |
-                  mkdir $(release)
+                  mkdir -p $(release)
                 displayName: 'Prepare release folder'
 
               - script: |
-                  mkdir $(drop)
+                  mkdir -p $(drop)
                 displayName: 'Prepare drop folder'
 
               - task: ArchiveFiles@2
@@ -933,11 +939,10 @@ extends:
                   rootFolderOrFile: '$(drop)'
                   archiveFile: '$(release)/drop.zip'
 
-              - task: AzureFileCopy@4
+              - task: AzureCLI@2
                 inputs:
-                  SourcePath: $(release)/*
                   azureSubscription: 'ESRP KeyVault identity'
-                  Destination: 'AzureBlob'
-                  storage: 'azcopyprivatedrops'
-                  ContainerName: '%24web'
-                  BlobPrefix: 'releases/release-test-version-today'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    today=$(date +"%Y%m%d")
