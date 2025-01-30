@@ -883,9 +883,9 @@ extends:
 #
 #      # VerifyArtifacts end here
 
-      - stage: AzCopyVersion
+      - stage: ReleaseToContainer
         jobs:
-          - job: GetAzCopyVersion
+          - job: UploadToContainer
             pool:
               name: azcopy-pool
               image: ubuntu22-1espt
