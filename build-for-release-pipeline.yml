@@ -1,6 +1,17 @@
 variables:
   AZCOPY_GOLANG_VERSION: '1.21.8'
 
+parameters:
+  - name: publish_to_container
+    displayName: 'Publish To Container'
+    type: boolean
+    default: false
+
+  - name: publish_to_m1_container
+    displayName: 'Publish To M1 Container'
+    type: boolean
+    default: false
+
 # Do not trigger this pipeline automatically
 trigger: none
 pr: none
