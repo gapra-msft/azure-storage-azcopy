@@ -883,16 +883,63 @@ extends:
 #
 #      # VerifyArtifacts end here
 
-      - stage: DoNothing
+      - stage: AzCopyVersion
         jobs:
-          - job: DoNothing
-            timeoutInMinutes: 120
+          - job: GetAzCopyVersion
             pool:
               name: azcopy-pool
               image: ubuntu22-1espt
               os: linux
+            # If the pipeline publishes artifacts, use `templateContext` to define the artifacts.
+            # This will enable 1ES PT to run SDL analysis tools on the artifacts and then upload them.
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  targetPath: $(System.DefaultWorkingDirectory)/releasehelper
+                  artifactName: 'azcopy-releasehelper'
+                  displayName: 'Upload Release Helper Files'
             variables:
-              - name: input_path
-                value: '$(System.DefaultWorkingDirectory)'
+              - name: output_path
+                value: '$(System.DefaultWorkingDirectory)/releasehelper'
             steps:
               - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: GoTool@0
+                env:
+                  GO111MODULE: 'on'
+                inputs:
+                  version: $(AZCOPY_GOLANG_VERSION)
+
+              - script: |
+                  go build -tags "netgo" -o azcopy
+                displayName: 'Build AzCopy'
+
+              - script: |
+                  # Run azcopy --version and capture the output
+                  azcopyOutput=$(./azcopy --version)
+
+                  # Extract the version part
+                  if echo "$azcopyOutput" | grep -q "azcopy version"; then
+                    version=$(echo "$azcopyOutput" | sed -n 's/^azcopy version \([0-9]*\.[0-9]*\.[0-9]*[^ ]*\).*/\1/p')
+                    if [[ -n "$version" ]]; then
+                      echo "Extracted version: $version"
+                      echo "##vso[task.setvariable variable=azcopy_version;isOutput=true]$version"
+                    else
+                      echo "Unable to extract version from azcopy output"
+                      exit 1
+                    fi
+                  else
+                    echo "azcopy version string not found in output"
+                    exit 1
+                  fi
+                displayName: 'Verify and extract the generated build version'
+                name: SetAzCopyVersion
+
+              - script: |
+                  mkdir -p $(output_path)
+                  cp docker/Dockerfile* $(output_path)
+                  echo $(azcopy_version) > $(output_path)/latest_version.txt
+                  cp NOTICE.txt $(output_path)
+                  cp packages.csv $(output_path)
+                displayName: 'Release Helper Files'
