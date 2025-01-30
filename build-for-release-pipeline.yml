@@ -926,3 +926,9 @@ extends:
               - script: |
                   mkdir -p $(drop)
                 displayName: 'Prepare drop folder'
+
+              - task: ArchiveFiles@2
+                displayName: 'Archive drop'
+                inputs:
+                  rootFolderOrFile: '$(drop)'
+                  archiveFile: '$(release)/drop.zip'
