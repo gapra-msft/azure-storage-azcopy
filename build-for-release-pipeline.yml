@@ -952,5 +952,11 @@ extends:
                       container_url="https://azcopyvnextrelease.blob.core.windows.net/%24web/releases/release-$(azcopy_version)-$today"
                     else
                       container_url="https://azcopyprivatedrops.blob.core.windows.net/%24web/releases/release-$(azcopy_version)-$today"
+                    fi
                     echo "Artifacts will be uploaded to: $container_url"
                     AZCOPY_AUTO_LOGIN_TYPE=AzCLI ./azcopy cp "$(release)/*" "$container_url" --recursive --put-md5=true
+                    
+                    if [[ "${{ parameters.publish_to_m1_container }}" == "true" ]]; then
+                      m1_container_url="https://azcopyvnextrelease.blob.core.windows.net/%24web/azcopy-m1-drops/azcopy-$(azcopy_version)-$today"
+                    AZCOPY_AUTO_LOGIN_TYPE=AzCLI ./azcopy cp "$(input_path)/azcopy-binaries-mac/azcopy_darwin_m1_arm64" "$m1_container_url" --recursive --put-md5=true
+                    fi
