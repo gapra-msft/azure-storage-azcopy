@@ -1024,7 +1024,7 @@ extends:
             variables:
               - group: AZCOPY_SECRET_VAULT
               - name: azcopy_version
-                value: $[ stageDependencies.AzCopyVersion.GetAzCopyVersion.outputs['SetAzCopyVersion.azcopy_version'] ]
+                value: $[ lower(stageDependencies.AzCopyVersion.GetAzCopyVersion.outputs['SetAzCopyVersion.azcopy_version']) ]
             steps:
               - checkout: self
                 displayName: 'Checkout repository'
