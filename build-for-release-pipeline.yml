@@ -963,7 +963,7 @@ extends:
                 displayName: 'Build AzCopy'
 
               - script: |
-                  tree $(input)
+                  tree
                 displayName: 'Debug input'
 
               - script: |
@@ -986,10 +986,7 @@ extends:
                   archiveFile: '$(release)/drop.zip'
 
               - script: |
-                  echo "Contents of Release"
-                  tree $(release)
-                  echo "Contents of Drop"
-                  tree $(drop)
+                  tree
                 displayName: 'Debug output'
 
               - task: AzureCLI@2
@@ -1040,8 +1037,14 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
               - script: |
+                  tree
+                displayName: 'Debug input'
+              - script: |
                   mv azcopy_linux_amd64 azcopy
                 displayName: 'Setup AzCopy in expected location'
+              - script: |
+                  tree
+                displayName: 'Debug output'
               - task: 1ES.BuildContainerImage@1
                 inputs:
                   image: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64.$(azcopy_version):latest
