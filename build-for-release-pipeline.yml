@@ -1041,7 +1041,7 @@ extends:
                     AZCOPY_AUTO_LOGIN_TYPE=AzCLI ./azcopy cp "$(input)/azcopy-binaries-mac/azcopy_darwin_m1_arm64" "$m1_container_url" --recursive --put-md5=true
                     fi
 
-      # ReleaseToContainer ends here
+      # UploadToStorage ends here
       - ${{ if eq(parameters.publish_docker_image, true) }}:
         - stage: BuildAndPublishDockerImage
           dependsOn:
@@ -1166,7 +1166,7 @@ extends:
         - stage: PublishArtifacts
           dependsOn:
             - AzCopyVersion
-            - ReleaseToContainer
+            - UploadToStorage
           jobs:
             - job: Job
               pool:
