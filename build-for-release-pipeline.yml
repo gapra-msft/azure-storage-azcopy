@@ -32,6 +32,21 @@ parameters:
     type: boolean
     default: false
 
+  - name: publish_artifacts
+    displayName: 'Publish Artifacts to Linux Repos'
+    type: boolean
+    default: false
+
+  - name: update_version
+    displayName: 'Update Version'
+    type: boolean
+    default: false
+
+  - name: debug_pipeline
+    displayName: 'Debug Pipeline'
+    type: boolean
+    default: false
+
 # Do not trigger this pipeline automatically
 trigger: none
 pr: none
@@ -956,7 +971,7 @@ extends:
               - script: |
                   sudo apt-get clean
                   sudo apt-get update --fix-missing
-                  sudo apt-get install -y zip unzip tree
+                  sudo apt-get install -y zip unzip
                 displayName: 'Install Dependencies'
 
               - task: GoTool@0
@@ -1146,3 +1161,85 @@ extends:
                     isDraft: ${{ parameters.draft }}
                     isPreRelease: ${{ parameters.prerelease }}
                     assetUploadMode: replace
+
+      - ${{ if eq(parameters.publish_artifacts, true) }}:
+        - stage: PublishArtifacts
+          dependsOn:
+            - AzCopyVersion
+            - ReleaseToContainer
+          jobs:
+            - job: Job
+              pool:
+                name: azcopy-pool
+                image: ubuntu22-1espt
+                os: linux
+              variables:
+                - group: AZCOPY_SECRET_VAULT
+                - name: signed
+                  value: '$(System.DefaultWorkingDirectory)/signed'
+              steps:
+                - checkout: self
+
+                - task: PipAuthenticate@1
+                  inputs:
+                    artifactFeeds: 'DevExGlobalFeed'
+                  displayName: 'Connect to PMC artifact'
+
+                - script: |
+                    sudo apt-get clean
+                    sudo apt-get update --fix-missing
+                    sudo apt-get install -y tree
+                  displayName: 'Install Dependencies'
+
+                - script: |
+                    pip install pmc-cli
+                  displayName: 'Install pmc-cli'
+
+                - task: DownloadSecureFile@1
+                  name: pmcCertificate
+                  displayName: 'Download pmc pem file'
+                  inputs:
+                    secureFile: 'blobfusebuildvault-blobfuse-release-pmc1-20230911.pem'
+
+                - task: DownloadSecureFile@1
+                  name: settings
+                  displayName: 'Download settings.toml file'
+                  inputs:
+                    secureFile: 'settings.toml'
+
+                - script: |
+                    pmc --version
+                    pmc --msal-cert-path $(pmcCertificate.secureFilePath) --config $(settings.secureFilePath) repo list --limit 1
+                    if [ $? -ne 0 ]; then
+                      exit 1
+                    fi
+                  displayName: 'Test PMC installation'
+
+                # DownloadPipelineArtifacts AFTER checkout since checkout wipes out the DefaultWorkingDirectory
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifactName: azcopy-linux-signed
+                    targetPath: $(signed)
+                    displayName: "Download Linux Signed"
+
+                - script: |
+                    arm64file=$(ls "$(signed)/mariner/azcopy"*.arm64.rpm)
+                    amd64file=$(ls "$(signed)/mariner/azcopy"*.x86_64.rpm)
+                    marinerArmFileName="${arm64file/.arm64.rpm/-cm2.arm64.rpm}"
+                    marinerAmdFileName="${amd64file/.x86_64.rpm/-cm2.x86_64.rpm}"
+                    
+                    mv -v "$(signed)/mariner/azcopy"*.arm64.rpm "$marinerArmFileName"
+                    mv -v "$(signed)/mariner/azcopy"*.x86_64.rpm "$marinerAmdFileName"
+                    
+                    mv "$(signed)/mariner/azcopy"*.rpm "$(signed)/"
+                    rm -r "$(signed)/mariner/"
+                  displayName: 'Rename Mariner binaries'
+
+                - script: |
+                    rm -r "$(signed)/*.tar.gz"
+                  displayName: 'Remove tar gz files'
+
+                - script: |
+                    tree
+                    cat packages.csv
+                  displayName: 'Debug'
