@@ -362,8 +362,9 @@ extends:
         # BuildArtifacts end here
 
       - stage: SignArtifacts
-        dependsOn: BuildArtifacts
-        condition: succeeded('BuildArtifacts')
+        dependsOn:
+          - AzCopyVersion
+          - BuildArtifacts
         jobs:
           - job: Linux
             timeoutInMinutes: 120
@@ -694,7 +695,6 @@ extends:
 
       - stage: VerifyArtifacts
         dependsOn: SignArtifacts
-        condition: succeeded('SignArtifacts')
         jobs:
           - job: Ubuntu_Amd64
             timeoutInMinutes: 120
@@ -895,8 +895,9 @@ extends:
       # VerifyArtifacts end here
 
       - stage: ReleaseToContainer
-        dependsOn: VerifyArtifacts
-        condition: succeeded('VerifyArtifacts')
+        dependsOn:
+          - AzCopyVersion
+          - VerifyArtifacts
         jobs:
           - job: Job
             pool:
@@ -1008,8 +1009,9 @@ extends:
       # ReleaseToContainer end here
 
       - stage: BuildAndPublishDockerImage
-        dependsOn: VerifyArtifacts
-        condition: succeeded('VerifyArtifacts')
+        dependsOn:
+          - AzCopyVersion
+          - VerifyArtifacts
         jobs:
           - job: LinuxAMD64
             pool:
@@ -1040,10 +1042,10 @@ extends:
                 displayName: 'Debug Container Image Name'
               - task: 1ES.BuildContainerImage@1
                 inputs:
-                  image: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64:latest
+                  image: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64.$(azcopy_version):latest
                   path: '$(System.DefaultWorkingDirectory)'
                   dockerfile: docker/Dockerfile
               - task: 1ES.PushContainerImage@1
                 inputs:
-                  image: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64:latest
-                  remoteImage: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64:latest,azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64:$(azcopy_version)
+                  image: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64.$(azcopy_version):latest
+                  remoteImage: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64.$(azcopy_version):latest
