@@ -903,12 +903,6 @@ extends:
               name: azcopy-pool
               image: ubuntu22-1espt
               os: linux
-            templateContext:
-              inputs:
-                - input: pipelineArtifact
-                  artifactName: azcopy-linux-signed
-                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-linux-signed
-                  displayName: "Download Linux Signed"
 #                - input: pipelineArtifact
 #                  artifactName: azcopy-windows-signed
 #                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-windows-signed
@@ -917,14 +911,6 @@ extends:
 #                  artifactName: azcopy-mac-signed
 #                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-mac-signed
 #                  displayName: "Download Mac Signed"
-                - input: pipelineArtifact
-                  artifactName: azcopy-binaries-linux-amd64
-                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-linux-amd64
-                  displayName: "Download Linux AMD64 Binaries"
-                - input: pipelineArtifact
-                  artifactName: azcopy-binaries-linux-arm64
-                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-linux-arm64
-                  displayName: "Download Linux ARM64 Binaries"
 #                - input: pipelineArtifact
 #                  artifactName: azcopy-binaries-windows
 #                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-windows
@@ -962,15 +948,30 @@ extends:
                   go build -tags "netgo" -o azcopy
                 displayName: 'Build AzCopy'
 
-              - script: |
-                  tree
-                displayName: 'Debug input'
+              # DownloadPipelineArtifacts AFTER checkout since checkout wipes out the DefaultWorkingDirectory
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  artifactName: azcopy-linux-signed
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-linux-signed
+                  displayName: "Download Linux Signed"
 
               - script: |
                   mkdir -p $(release)
                   rm -r $(input)/azcopy-linux-signed/mariner
                   cp $(input)/azcopy-linux-signed/* $(release)
                 displayName: 'Prepare release folder'
+
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  artifactName: azcopy-binaries-linux-amd64
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-linux-amd64
+                  displayName: "Download Linux AMD64 Binaries"
+
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  artifactName: azcopy-binaries-linux-arm64
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-linux-arm64
+                  displayName: "Download Linux ARM64 Binaries"
 
               - script: |
                   mkdir -p $(drop)
@@ -984,10 +985,6 @@ extends:
                 inputs:
                   rootFolderOrFile: '$(drop)'
                   archiveFile: '$(release)/drop.zip'
-
-              - script: |
-                  tree
-                displayName: 'Debug output'
 
               - task: AzureCLI@2
                 inputs:
@@ -1023,12 +1020,6 @@ extends:
             templateContext:
               authenticatedContainerRegistries:
                 - serviceConnection: AzCopyContainers_ACR
-              inputs:
-                - input: pipelineArtifact
-                  artifactName: azcopy-binaries-linux-amd64
-                  targetPath: $(System.DefaultWorkingDirectory)
-                  itemPattern: 'azcopy_linux_amd64'
-                  displayName: "Download Linux AMD64 Binaries"
             variables:
               - group: AZCOPY_SECRET_VAULT
               - name: azcopy_version
@@ -1036,15 +1027,15 @@ extends:
             steps:
               - checkout: self
                 displayName: 'Checkout repository'
-              - script: |
-                  tree
-                displayName: 'Debug input'
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  artifactName: azcopy-binaries-linux-amd64
+                  targetPath: $(System.DefaultWorkingDirectory)
+                  itemPattern: 'azcopy_linux_amd64'
+                  displayName: "Download Linux AMD64 Binary"
               - script: |
                   mv azcopy_linux_amd64 azcopy
                 displayName: 'Setup AzCopy in expected location'
-              - script: |
-                  tree
-                displayName: 'Debug output'
               - task: 1ES.BuildContainerImage@1
                 inputs:
                   image: azcopycontainers.azurecr.io/azure-azcopy-ubuntu-x86_64.$(azcopy_version):latest
