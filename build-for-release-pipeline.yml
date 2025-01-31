@@ -906,35 +906,35 @@ extends:
               inputs:
                 - input: pipelineArtifact
                   artifactName: azcopy-linux-signed
-                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-linux-signed
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-linux-signed
                   displayName: "Download Linux Signed"
                 - input: pipelineArtifact
                   artifactName: azcopy-windows-signed
-                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-windows-signed
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-windows-signed
                   displayName: "Download Windows Signed"
                 - input: pipelineArtifact
                   artifactName: azcopy-mac-signed
-                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-mac-signed
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-mac-signed
                   displayName: "Download Mac Signed"
                 - input: pipelineArtifact
                   artifactName: azcopy-binaries-linux-amd64
-                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-binaries-linux-amd64
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-linux-amd64
                   displayName: "Download Linux AMD64 Binaries"
                 - input: pipelineArtifact
                   artifactName: azcopy-binaries-linux-arm64
-                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-binaries-linux-arm64
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-linux-arm64
                   displayName: "Download Linux ARM64 Binaries"
                 - input: pipelineArtifact
                   artifactName: azcopy-binaries-windows
-                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-binaries-windows
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-windows
                   displayName: "Download Windows Binaries"
                 - input: pipelineArtifact
                   artifactName: azcopy-binaries-mac
-                  targetPath: $(System.DefaultWorkingDirectory)/azcopy-binaries-mac
+                  targetPath: $(System.DefaultWorkingDirectory)/input/azcopy-binaries-mac
                   displayName: "Download Mac Binaries"
             variables:
               - name: input
-                value: '$(System.DefaultWorkingDirectory)'
+                value: '$(System.DefaultWorkingDirectory)/input'
               - name: release
                 value: '$(System.DefaultWorkingDirectory)/release'
               - name: drop
@@ -962,8 +962,12 @@ extends:
                 displayName: 'Build AzCopy'
 
               - script: |
+                  tree $(input)
+                displayName: 'Debug input'
+
+              - script: |
                   mkdir -p $(release)
-                  rm -rf $(input)/azcopy-linux-signed/mariner
+                  rm -r $(input)/azcopy-linux-signed/mariner
                   cp $(input)/azcopy-linux-signed/* $(release)
                   cp $(input)/azcopy-windows-signed/* $(release)
                   cp $(input)/azcopy-mac-signed/* $(release)
@@ -984,6 +988,13 @@ extends:
                   rootFolderOrFile: '$(drop)'
                   archiveFile: '$(release)/drop.zip'
 
+              - script: |
+                  echo "Contents of Release"
+                  tree $(release)
+                  echo "Contents of Drop"
+                  tree $(drop)
+                displayName: 'Debug output'
+
               - task: AzureCLI@2
                 inputs:
                   azureSubscription: 'ESRP KeyVault identity'
@@ -1001,5 +1012,5 @@ extends:
                     
                     if [[ "${{ parameters.publish_to_m1_container }}" == "true" ]]; then
                       m1_container_url="https://azcopyvnextrelease.blob.core.windows.net/%24web/azcopy-m1-drops/azcopy-$(azcopy_version)-$today"
-                    AZCOPY_AUTO_LOGIN_TYPE=AzCLI ./azcopy cp "$(input_path)/azcopy-binaries-mac/azcopy_darwin_m1_arm64" "$m1_container_url" --recursive --put-md5=true
+                    AZCOPY_AUTO_LOGIN_TYPE=AzCLI ./azcopy cp "$(input)/azcopy-binaries-mac/azcopy_darwin_m1_arm64" "$m1_container_url" --recursive --put-md5=true
                     fi
