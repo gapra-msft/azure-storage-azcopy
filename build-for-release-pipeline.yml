@@ -1193,6 +1193,7 @@ extends:
 
                 - script: |
                     pip install pmc-cli
+                    echo '##vso[task.prependpath]$(HOME)/.local/bin'
                   displayName: 'Install pmc-cli'
 
                 - task: DownloadSecureFile@1
@@ -1248,7 +1249,7 @@ extends:
         - stage: UpdateLatestVersion
           dependsOn:
             - AzCopyVersion
-            - VerifyArtifacts
+            - UploadToStorage
           jobs:
             - job: Job
               pool:
@@ -1281,7 +1282,7 @@ extends:
                       echo "azcopy version: $azcopy_version"
                       #Upload to release version blob file
                       upload_url="https://azcopyprivatedrops.blob.core.windows.net/%24web/releasemetadata/latest_version.txt"
-                      echo "$azcopy_version" | azcopy copy "$upload_url" --from-to=PipeBlob --log-level=DEBUG --output-type=text > azcopy_output.txt
+                      echo "$azcopy_version" | ./azcopy copy "$upload_url" --from-to=PipeBlob --log-level=DEBUG --output-type=text > azcopy_output.txt
                       
                       # Handle errors 
                       if [ $? -eq 0 ]; then
