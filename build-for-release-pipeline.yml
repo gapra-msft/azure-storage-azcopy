@@ -1281,7 +1281,7 @@ extends:
                     inlineScript: |
                       echo "azcopy version: $(azcopy_version)"
                       #Upload to release version blob file
-                      upload_url="https://azcopyprivatedrops.blob.core.windows.net/%24web/releasemetadata/latest_version.txt"
+                      upload_url="https://azcopyvnextrelease.blob.core.windows.net/%24web/releasemetadata/latest_version.txt"
                       echo "Version will be uploaded to: $upload_url"
-                      echo "$(azcopy_version)" | ./azcopy copy "$upload_url" --from-to=PipeBlob --log-level=DEBUG --output-type=text 2>&1 | tee /dev/null
+                      echo $(azcopy_version) | ./azcopy copy "$upload_url" --from-to=PipeBlob --log-level=DEBUG --output-type=text 2>&1 | tee /dev/null
                       exit ${PIPESTATUS[1]}
