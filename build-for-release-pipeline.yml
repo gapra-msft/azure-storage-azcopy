@@ -1345,6 +1345,7 @@ extends:
                     scriptType: bash
                     scriptLocation: inlineScript
                     inlineScript: |
+                      export AZCOPY_AUTO_LOGIN_TYPE=AzCLI
                       echo "azcopy version: $(azcopy_version)"
                       #Upload to release version blob file
                       upload_url="https://azcopyvnextrelease.blob.core.windows.net/%24web/releasemetadata/latest_version.txt"
