@@ -1237,13 +1237,13 @@ extends:
                   displayName: 'Rename Mariner binaries'
 
                 - script: |
-                    rm -r "$(signed)/*.tar.gz"
-                  displayName: 'Remove tar gz files'
-
-                - script: |
                     tree
                     cat packages.csv
                   displayName: 'Debug'
+
+                - script: |
+                    rm -r "$(signed)/*.tar.gz"
+                  displayName: 'Remove tar gz files'
 
       - ${{ if eq(parameters.update_version, true) }}:
         - stage: UpdateLatestVersion
@@ -1279,10 +1279,11 @@ extends:
                     scriptType: bash
                     scriptLocation: inlineScript
                     inlineScript: |
-                      echo "azcopy version: $azcopy_version"
+                      echo "azcopy version: $(azcopy_version)"
                       #Upload to release version blob file
                       upload_url="https://azcopyprivatedrops.blob.core.windows.net/%24web/releasemetadata/latest_version.txt"
-                      echo "$azcopy_version" | ./azcopy copy "$upload_url" --from-to=PipeBlob --log-level=DEBUG --output-type=text > azcopy_output.txt
+                      echo "Version will be uploaded to: $upload_url"
+                      echo "$(azcopy_version)" | ./azcopy copy "$upload_url" --from-to=PipeBlob --log-level=DEBUG --output-type=text > azcopy_output.txt
                       
                       # Handle errors 
                       if [ $? -eq 0 ]; then
